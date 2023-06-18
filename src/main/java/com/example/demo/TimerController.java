@@ -49,6 +49,7 @@ public class TimerController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        SceneController sceneController = new SceneController();
         handler = new DataBaseHandler();
         time.getItems().addAll(Constants.TIMES);
         FileInput input = new FileInput();
@@ -161,7 +162,12 @@ public class TimerController implements Initializable {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    Parent root;
+                    try {
+                        sceneController.switchToResult(event);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    /*Parent root;
                     try {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("result_table.fxml"));
                         root = loader.load();
@@ -172,7 +178,7 @@ public class TimerController implements Initializable {
                         ((Node) (event.getSource())).getScene().getWindow().hide();
                     } catch (IOException e) {
                         e.printStackTrace();
-                    }
+                    }*/
                 }
 
                 if (seconds < 10) {

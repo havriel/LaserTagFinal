@@ -26,6 +26,7 @@ public class MainController {
 
     @FXML
     void initialize() {
+        SceneController sceneController = new SceneController();
         DataBaseHandler handler = new DataBaseHandler();
         handler.clearBase();
         input = new FileInput();
@@ -40,16 +41,8 @@ public class MainController {
             }
             if (connector.connect(comText.getText())) {
                 input.writeFile(comText.getText());
-                Parent root;
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("SecondPage.fxml"));
-                    root = loader.load();
-                    Stage stage = new Stage();
-                    stage.setTitle(Constants.LABEL);
-                    stage.setScene(new Scene(root));
-                    stage.show();
-                    // Hide this current window (if this is what you want)
-                    ((Node) (event.getSource())).getScene().getWindow().hide();
+                    sceneController.switchToAddPlayers(event);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

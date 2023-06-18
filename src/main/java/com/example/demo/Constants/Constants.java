@@ -12,6 +12,6 @@ public class Constants {
 
     public static final Integer[] TIMES = {5,10,15,20,25,30,35,40,45,50,55,60};
 
-    public static final File FILE = new File("src/main/resources/comPort.txt");
+    public static final File FILE = new File("comPort.txt");
 
 }

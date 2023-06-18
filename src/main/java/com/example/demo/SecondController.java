@@ -18,7 +18,6 @@ import java.io.IOException;
 
 public class SecondController {
     DataBaseHandler db = new DataBaseHandler();
-
     PlayerProvider playerProvider = new PlayerProvider();
     @FXML
     private Button addBtn;
@@ -46,6 +45,7 @@ public class SecondController {
 
     @FXML
     void initialize() {
+        SceneController sceneController = new SceneController();
         second_name.setStyle("-fx-prompt-text-fill: black");
         second_weapon.getItems().addAll(Constants.WEAPON);
         second_vest.getItems().addAll(Constants.VEST);
@@ -79,16 +79,8 @@ public class SecondController {
         });
 
         startBtn.setOnAction(event -> {
-            Parent root;
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("timer.fxml"));
-                root = loader.load();
-                Stage stage = new Stage();
-                stage.setTitle(Constants.LABEL);
-                stage.setScene(new Scene(root));
-                stage.show();
-                // Hide this current window (if this is what you want)
-                ((Node) (event.getSource())).getScene().getWindow().hide();
+                sceneController.switchToTimer(event);
             } catch (IOException e) {
                 e.printStackTrace();
             }
