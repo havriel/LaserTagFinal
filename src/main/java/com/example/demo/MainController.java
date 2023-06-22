@@ -12,9 +12,9 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class MainController {
-    public static Alert nullAlert = new Alert(Alert.AlertType.NONE);
     private FileInput input;
     private Connector connector;
 
@@ -28,32 +28,34 @@ public class MainController {
     void initialize() {
         SceneController sceneController = new SceneController();
         DataBaseHandler handler = new DataBaseHandler();
-        handler.clearBase();
         input = new FileInput();
+        handler.deleteTable();
         nextBtn.setOnAction(event -> {
             connector = new Connector();
             if (comText.getText().isEmpty()) {
-                nullAlert.setAlertType(Alert.AlertType.WARNING);
-                nullAlert.setTitle(Constants.ERR);
-                nullAlert.setContentText("Вы не указали COM порт!");
-                nullAlert.show();
-                return;
+                System.out.println("Error");
             }
             if (connector.connect(comText.getText())) {
                 input.writeFile(comText.getText());
+                handler.createTable();
                 try {
+                    handler.getDbConnection().close();
                     sceneController.switchToAddPlayers(event);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (SQLException | ClassNotFoundException e) {
+                    throw new RuntimeException(e);
                 }
                 connector.getSerialPort().closePort();
             } else {
-                nullAlert.setAlertType(Alert.AlertType.ERROR);
-                nullAlert.setTitle(Constants.ERR);
-                nullAlert.setContentText("Ошибка соединения с платой");
-                nullAlert.show();
+                System.out.println("Ошибка соединения с платой");
             }
         });
+        try {
+            handler.getDbConnection().close();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

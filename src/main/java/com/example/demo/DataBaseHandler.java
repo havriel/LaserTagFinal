@@ -9,18 +9,45 @@ public class DataBaseHandler extends Configs {
     public Connection dbConnection;
 
     public Connection getDbConnection() throws SQLException, ClassNotFoundException {
-        String connectionString = "jdbc:mysql://localhost/lasertag";
+        String connectionString = "jdbc:sqlite:mydatabase.db";
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            dbConnection = DriverManager.getConnection(connectionString, dbUser, dbPass);
-        } catch (ClassNotFoundException e) {
+            dbConnection = DriverManager.getConnection(connectionString);
+        } catch (Exception e) {
             throw new RuntimeException(e);
-        } catch (SQLException e) {
-            throw new RuntimeException("unhandled", e);
         }
         return dbConnection;
     }
 
+    public void createTable(){
+        try {
+            dbConnection = getDbConnection();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        String create = "create table players(id int primary key, name text not null,command text not null,weapon int not null,vest int not null,kills int,deaths int ,place int)";
+        try {
+            Statement statement = dbConnection.createStatement();
+            statement.execute(create);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public void deleteTable(){
+        try {
+            dbConnection = getDbConnection();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        String delete = "drop table if exists 'mydatabase.players'";
+        try {
+            Statement statement = dbConnection.createStatement();
+            statement.executeUpdate(delete);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void addPlayer(Player player) {
         try {
             dbConnection = getDbConnection();
@@ -43,28 +70,7 @@ public class DataBaseHandler extends Configs {
         }
     }
 
-    public void clearBase() {
-        try {
-            dbConnection = getDbConnection();
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        String clear = "TRUNCATE TABLE players";
-        try {
-            Statement statement = dbConnection.createStatement();
-            statement.execute(clear);
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void updateDeaths(int vest) {
-        try {
-            dbConnection = getDbConnection();
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    public void updateDeaths(int vest, Connection dbConnection) {
         String uDeath = "UPDATE players SET deaths=deaths+1 WHERE vest=" + vest;
         try {
             Statement statement = dbConnection.createStatement();
@@ -74,12 +80,7 @@ public class DataBaseHandler extends Configs {
         }
     }
 
-    public void updateKills(int weapon) {
-        try {
-            dbConnection = getDbConnection();
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    public void updateKills(int weapon, Connection dbConnection) {
         String uKills = "UPDATE players SET kills=kills+1 WHERE weapon=" + weapon;
         try {
             Statement statement = dbConnection.createStatement();
@@ -89,13 +90,8 @@ public class DataBaseHandler extends Configs {
         }
     }
 
-    public List<Player> getRedTable(){
+    public List<Player> getRedTable(Connection dbConnection){
         List<Player> playersRed = new ArrayList<>();
-        try {
-            dbConnection = getDbConnection();
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
         String get = "SELECT * FROM players WHERE command='Red'";
         try {
             Statement statement = dbConnection.createStatement();
@@ -120,13 +116,8 @@ public class DataBaseHandler extends Configs {
         return playersRed;
     }
 
-    public List<Player> getBlueTable(){
+    public List<Player> getBlueTable(Connection dbConnection){
         List<Player> playersBlue = new ArrayList<>();
-        try {
-            dbConnection = getDbConnection();
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
         String get = "SELECT * FROM players WHERE command='Blue'";
         try {
             Statement statement = dbConnection.createStatement();

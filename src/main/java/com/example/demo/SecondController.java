@@ -15,6 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class SecondController {
     DataBaseHandler db = new DataBaseHandler();
@@ -77,34 +78,27 @@ public class SecondController {
             second_vest.setValue(null);
             second_weapon.setValue(null);
         });
-
         startBtn.setOnAction(event -> {
             try {
+                db.getDbConnection().close();
                 sceneController.switchToTimer(event);
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (SQLException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
             }
         });
-
     }
 
     public void newPlayer(Player player) {
         for(int i=0;i<playerProvider.getList().size();i++){
             if(playerProvider.getList().get(i).getWeaponNum() == second_weapon.getValue()||
                     playerProvider.getList().get(i).getVestNum() == second_vest.getValue()){
-                MainController.nullAlert.setAlertType(Alert.AlertType.WARNING);
-                MainController.nullAlert.setTitle(Constants.ERR);
-                MainController.nullAlert.setContentText("Этот номер уже занят!");
-                MainController.nullAlert.show();
                 return;
             }
         }
         if (second_name.getText().isEmpty() || second_command.getValue().isEmpty() || second_weapon.getValue() == null
                 || second_vest.getValue() == null) {
-            MainController.nullAlert.setAlertType(Alert.AlertType.WARNING);
-            MainController.nullAlert.setTitle(Constants.ERR);
-            MainController.nullAlert.setContentText("Заполните все поля!");
-            MainController.nullAlert.show();
         } else {
             player.setName(second_name.getText());
             if(second_command.getValue().equals("Красная")){

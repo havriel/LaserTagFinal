@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import jssc.SerialPort;
+import jssc.SerialPortEvent;
 import jssc.SerialPortException;
 
 import java.io.IOException;
@@ -54,9 +55,9 @@ public class TimerController implements Initializable {
         time.getItems().addAll(Constants.TIMES);
         FileInput input = new FileInput();
         serialPort = new SerialPort(input.readFile());
-        if(seconds<10){
-            second.setText("0"+seconds);
-        }else {
+        if (seconds < 10) {
+            second.setText("0" + seconds);
+        } else {
             second.setText(Integer.toString(seconds));
         }
         if (minutes < 10) {
@@ -66,13 +67,12 @@ public class TimerController implements Initializable {
         }
 
         startTimer.setOnAction(event -> {
-            if(time.getValue() == null){
+            if (time.getValue() == null) {
                 return;
-            }else {
+            } else {
                 startTimer.setDisable(true);
             }
             time.setDisable(true);
-
 
             try {
                 serialPort.openPort();
@@ -80,7 +80,6 @@ public class TimerController implements Initializable {
             } catch (SerialPortException e) {
                 throw new RuntimeException(e);
             }
-
 
             try {
                 handler.dbConnection = handler.getDbConnection();
@@ -109,48 +108,56 @@ public class TimerController implements Initializable {
 
                 if (!isStopped) {
                     try {
-                        String s = serialPort.readString().trim();
-                        System.out.println(s);
-                        String getVest;
-                        String getWeapon;
-
-                        int w = Integer.parseInt(s.substring(s.lastIndexOf('/') + 1));
-                        int v = Integer.parseInt(s.substring(0, s.indexOf('/')));
-
-                        if ( v == 10) {
-                            getVest = "SELECT vest FROM players WHERE vest =" + 10;
+                        String s = serialPort.readString();
+                        if (s == null) {
+                            s = "0/0";
+                            System.out.println(s);
                         } else {
-                            getVest = "SELECT vest FROM players WHERE vest =" + Integer.parseInt(s.substring(0, 1));
-                        }
+                            s = s.trim();
+                            System.out.println(s);
+                            String getVest;
+                            String getWeapon;
 
-                        if (s.endsWith("10")) {
-                            getWeapon = "SELECT weapon FROM players WHERE weapon =" + 10;
-                        } else {
-                            getWeapon = "SELECT weapon FROM players WHERE weapon =" + w;
-                        }
-                        PreparedStatement statementVest;
-                        PreparedStatement statementWeapon;
-                        ResultSet rsVest;
-                        ResultSet rsWeapon;
-                        try {
-                            statementVest = handler.dbConnection.prepareStatement(getVest);
-                            statementWeapon = handler.dbConnection.prepareStatement(getWeapon);
-                            rsVest = statementVest.executeQuery();
-                            rsWeapon = statementWeapon.executeQuery();
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                        if (rsVest.next()) {
-                            if (rsVest.getInt("vest") == Integer.parseInt(s.substring(0, 1))) {
-                                handler.updateDeaths(Integer.parseInt(s.substring(0, 1)));
-                            }else{
-                                handler.updateDeaths(v);
+                            int w = Integer.parseInt(s.substring(s.lastIndexOf('/') + 1));
+                            int v = Integer.parseInt(s.substring(0, s.indexOf('/')));
+
+                            if (v == 10) {
+                                getVest = "SELECT vest FROM players WHERE vest =" + 10;
+                            } else {
+                                getVest = "SELECT vest FROM players WHERE vest =" + Integer.parseInt(s.substring(0, 1));
                             }
-                        }
-                        if (rsWeapon.next()) {
-                            if (rsWeapon.getInt("weapon") == w) {
-                                handler.updateKills(w);
+
+                            if (s.endsWith("10")) {
+                                getWeapon = "SELECT weapon FROM players WHERE weapon =" + 10;
+                            } else {
+                                getWeapon = "SELECT weapon FROM players WHERE weapon =" + w;
                             }
+                            PreparedStatement statementVest;
+                            PreparedStatement statementWeapon;
+                            ResultSet rsVest;
+                            ResultSet rsWeapon;
+                            try {
+                                statementVest = handler.dbConnection.prepareStatement(getVest);
+                                statementWeapon = handler.dbConnection.prepareStatement(getWeapon);
+                                rsVest = statementVest.executeQuery();
+                                rsWeapon = statementWeapon.executeQuery();
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                            if (rsVest.next()) {
+                                if (rsVest.getInt("vest") == Integer.parseInt(s.substring(0, 1))) {
+                                    handler.updateDeaths(Integer.parseInt(s.substring(0, 1)), handler.dbConnection);
+                                } else {
+                                    handler.updateDeaths(v, handler.dbConnection);
+                                }
+                            }
+                            if (rsWeapon.next()) {
+                                if (rsWeapon.getInt("weapon") == w) {
+                                    handler.updateKills(w, handler.dbConnection);
+                                }
+                            }
+                            statementVest.close();
+                            statementWeapon.close();
                         }
                     } catch (SerialPortException | SQLException e) {
                         throw new RuntimeException(e);
@@ -163,22 +170,12 @@ public class TimerController implements Initializable {
                         throw new RuntimeException(e);
                     }
                     try {
+                        handler.getDbConnection().close();
                         sceneController.switchToResult(event);
-                    } catch (IOException e) {
+                    } catch (IOException | SQLException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
-                    /*Parent root;
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("result_table.fxml"));
-                        root = loader.load();
-                        Stage stage = new Stage();
-                        stage.setTitle(Constants.LABEL);
-                        stage.setScene(new Scene(root));
-                        stage.show();
-                        ((Node) (event.getSource())).getScene().getWindow().hide();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }*/
+
                 }
 
                 if (seconds < 10) {
@@ -196,7 +193,8 @@ public class TimerController implements Initializable {
         });
         stop();
     }
-    private void stop(){
+
+    private void stop() {
         stopTimer.setOnAction(event -> {
             timeline.stop();
             try {
